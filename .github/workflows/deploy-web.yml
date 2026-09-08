@@ -1,0 +1,47 @@
+name: Deploy Web
+
+# Vercel no trae Flutter instalado, así que no puede compilar el proyecto
+# por su cuenta al conectar el repo directo. Este workflow sí instala
+# Flutter, compila `flutter build web` (con el mismo --dart-define que usa
+# deploy/web/build_and_deploy.sh) y sube el resultado ya compilado más el
+# proxy serverless (deploy/web/api/) con el CLI de Vercel.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lib/**"
+      - "web/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - "deploy/web/api/**"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.2"
+          channel: stable
+
+      - run: flutter pub get
+
+      - run: flutter build web --release --dart-define=DEEZER_PROXY_BASE_URL=/api/deezer
+
+      - name: Copiar build al proyecto de Vercel
+        run: |
+          rm -rf deploy/web/public
+          mkdir -p deploy/web/public
+          cp -r build/web/. deploy/web/public/
+
+      - name: Deploy a Vercel
+        working-directory: deploy/web
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: npx vercel@59 --prod --yes --token="$VERCEL_TOKEN"
