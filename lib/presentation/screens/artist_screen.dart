@@ -69,15 +69,12 @@ class _ArtistScreenState extends State<ArtistScreen> {
                                 ),
                               ],
                             ),
-                            Hero(
-                              tag: 'artist-picture-${artist.id}',
-                              child: ClipOval(
-                                child: CachedNetworkImage(
-                                  imageUrl: artist.pictureBig,
-                                  width: 150,
-                                  height: 150,
-                                  fit: BoxFit.cover,
-                                ),
+                            ClipOval(
+                              child: CachedNetworkImage(
+                                imageUrl: artist.pictureBig,
+                                width: 150,
+                                height: 150,
+                                fit: BoxFit.cover,
                               ),
                             ),
                             const SizedBox(height: 16),

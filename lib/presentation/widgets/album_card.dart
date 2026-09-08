@@ -25,28 +25,25 @@ class AlbumCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Hero(
-              tag: 'album-cover-${album.id}',
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: CachedNetworkImage(
-                  imageUrl: album.coverMedium,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: CachedNetworkImage(
+                imageUrl: album.coverMedium,
+                width: 140,
+                height: 140,
+                fit: BoxFit.cover,
+                placeholder: (_, _) => Container(
+                  color: AppColors.surface,
                   width: 140,
                   height: 140,
-                  fit: BoxFit.cover,
-                  placeholder: (_, _) => Container(
-                    color: AppColors.surface,
-                    width: 140,
-                    height: 140,
-                  ),
-                  errorWidget: (_, _, _) => Container(
-                    color: AppColors.surface,
-                    width: 140,
-                    height: 140,
-                    child: const Icon(
-                      LucideIcons.disc3,
-                      color: AppColors.textSecondary,
-                    ),
+                ),
+                errorWidget: (_, _, _) => Container(
+                  color: AppColors.surface,
+                  width: 140,
+                  height: 140,
+                  child: const Icon(
+                    LucideIcons.disc3,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ),

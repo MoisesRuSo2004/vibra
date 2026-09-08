@@ -43,9 +43,6 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       body: Navigator(
         key: _navigatorKey,
-        // Sin esto, los Hero (portada de álbum/artista) no animan: al ser
-        // un Navigator manual y no el de MaterialApp, no trae uno propio.
-        observers: [HeroController()],
         onGenerateRoute: (settings) {
           switch (settings.name) {
             case AppRoutes.artistDetail:

@@ -24,27 +24,24 @@ class ArtistCard extends StatelessWidget {
         width: 100,
         child: Column(
           children: [
-            Hero(
-              tag: 'artist-picture-${artist.id}',
-              child: ClipOval(
-                child: CachedNetworkImage(
-                  imageUrl: artist.pictureMedium,
+            ClipOval(
+              child: CachedNetworkImage(
+                imageUrl: artist.pictureMedium,
+                width: 88,
+                height: 88,
+                fit: BoxFit.cover,
+                placeholder: (_, _) => Container(
+                  color: AppColors.surface,
                   width: 88,
                   height: 88,
-                  fit: BoxFit.cover,
-                  placeholder: (_, _) => Container(
-                    color: AppColors.surface,
-                    width: 88,
-                    height: 88,
-                  ),
-                  errorWidget: (_, _, _) => Container(
-                    color: AppColors.surface,
-                    width: 88,
-                    height: 88,
-                    child: const Icon(
-                      LucideIcons.circleUser,
-                      color: AppColors.textSecondary,
-                    ),
+                ),
+                errorWidget: (_, _, _) => Container(
+                  color: AppColors.surface,
+                  width: 88,
+                  height: 88,
+                  child: const Icon(
+                    LucideIcons.circleUser,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ),

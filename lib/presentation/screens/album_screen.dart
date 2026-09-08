@@ -63,16 +63,13 @@ class _AlbumScreenState extends State<AlbumScreen> {
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                       child: Column(
                         children: [
-                          Hero(
-                            tag: 'album-cover-${album.id}',
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: CachedNetworkImage(
-                                imageUrl: album.coverBig,
-                                width: 200,
-                                height: 200,
-                                fit: BoxFit.cover,
-                              ),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: CachedNetworkImage(
+                              imageUrl: album.coverBig,
+                              width: 200,
+                              height: 200,
+                              fit: BoxFit.cover,
                             ),
                           ),
                           const SizedBox(height: 16),
