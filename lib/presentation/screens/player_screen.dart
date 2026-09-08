@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/player_provider.dart';
@@ -92,11 +93,20 @@ class PlayerScreen extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
-                          track.artistName,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 15,
+                        GestureDetector(
+                          onTap: track.artistId == 0
+                              ? null
+                              : () => Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.artistDetail,
+                                  arguments: track.artistId,
+                                ),
+                          child: Text(
+                            track.artistName,
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 15,
+                            ),
                           ),
                         ),
                       ],

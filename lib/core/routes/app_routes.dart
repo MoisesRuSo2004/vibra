@@ -6,6 +6,16 @@ import 'package:flutter/material.dart';
 class AppRoutes {
   AppRoutes._();
 
+  /// Se registra como observer del Navigator anidado de AppShell. HomeScreen
+  /// lo usa (RouteAware.didPopNext) para detectar cuándo vuelve a quedar
+  /// visible tras cerrar una pantalla de detalle, y así forzar que sus
+  /// imágenes se recarguen desde cero — hay navegadores donde CanvasKit
+  /// deja de poder pintar las texturas viejas al volver de una ruta que
+  /// se mantuvo montada debajo (Safari/iOS lo sufre incluso compilando a
+  /// WebAssembly, que sí lo evita en Chrome).
+  static final RouteObserver<ModalRoute<void>> routeObserver =
+      RouteObserver<ModalRoute<void>>();
+
   static const String artistDetail = '/artist';
   static const String albumDetail = '/album';
   static const String genreDetail = '/genre';

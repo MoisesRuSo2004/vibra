@@ -7,10 +7,26 @@ import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/player_provider.dart';
 
-class MiniPlayer extends StatelessWidget {
+class MiniPlayer extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
 
   const MiniPlayer({super.key, required this.navigatorKey});
+
+  @override
+  State<MiniPlayer> createState() => _MiniPlayerState();
+}
+
+class _MiniPlayerState extends State<MiniPlayer> {
+  // Sin esto, tocar varias veces seguidas (antes de que termine la
+  // transición) empuja una ruta del reproductor por cada toque.
+  bool _opening = false;
+
+  Future<void> _openPlayer() async {
+    if (_opening) return;
+    _opening = true;
+    await widget.navigatorKey.currentState?.pushNamed(AppRoutes.player);
+    _opening = false;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +46,7 @@ class MiniPlayer extends StatelessWidget {
       child: track == null
           ? null
           : GestureDetector(
-              onTap: () =>
-                  navigatorKey.currentState?.pushNamed(AppRoutes.player),
+              onTap: _openPlayer,
               child: Column(
                 children: [
                   LinearProgressIndicator(

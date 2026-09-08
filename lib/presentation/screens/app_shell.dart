@@ -43,6 +43,7 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       body: Navigator(
         key: _navigatorKey,
+        observers: [AppRoutes.routeObserver],
         onGenerateRoute: (settings) {
           switch (settings.name) {
             case AppRoutes.artistDetail:

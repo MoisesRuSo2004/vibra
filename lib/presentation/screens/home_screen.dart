@@ -36,7 +36,15 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
+  // Se incrementa cada vez que se vuelve a esta pantalla desde una ruta de
+  // detalle (álbum/artista/reproductor) y se mete en las keys de las
+  // imágenes de abajo, para forzar que Flutter las reconstruya de cero en
+  // vez de reusar el CachedNetworkImage viejo — en algunos navegadores
+  // (Safari/iOS en particular) CanvasKit deja de poder pintar la textura
+  // de una imagen que quedó montada debajo de otra ruta.
+  int _visitGeneration = 0;
+
   @override
   void initState() {
     super.initState();
@@ -46,6 +54,23 @@ class _HomeScreenState extends State<HomeScreen> {
         provider.loadHome();
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    AppRoutes.routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    AppRoutes.routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    setState(() => _visitGeneration++);
   }
 
   @override
@@ -143,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     if (recentlyPlayed.isNotEmpty)
                       _Section(
-                        key: const ValueKey('section-recent'),
+                        key: ValueKey('section-recent-$_visitGeneration'),
                         title: 'Escuchado recientemente',
                         icon: LucideIcons.history,
                         delayMs: 0,
@@ -159,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const SizedBox(width: 16),
                             itemBuilder: (_, i) => _RecentTrackCard(
                                   key: ValueKey(
-                                    'recent-${recentlyPlayed[i].id}',
+                                    'recent-${recentlyPlayed[i].id}-$_visitGeneration',
                                   ),
                                   track: recentlyPlayed[i],
                                   queue: recentlyPlayed,
@@ -171,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     _Section(
-                      key: const ValueKey('section-recommended'),
+                      key: ValueKey('section-recommended-$_visitGeneration'),
                       title: 'Recomendado para ti',
                       icon: LucideIcons.sparkle,
                       delayMs: 60,
@@ -183,7 +208,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             .entries
                             .map(
                               (e) => Padding(
-                                key: ValueKey('recommended-${e.value.id}'),
+                                key: ValueKey(
+                                  'recommended-${e.value.id}-$_visitGeneration',
+                                ),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
                                 ),
@@ -199,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     _Section(
-                      key: const ValueKey('section-artists'),
+                      key: ValueKey('section-artists-$_visitGeneration'),
                       title: 'Artistas populares',
                       icon: LucideIcons.users,
                       delayMs: 120,
@@ -214,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemBuilder: (_, i) =>
                               ArtistCard(
                                     key: ValueKey(
-                                      'artist-${music.popularArtists[i].id}',
+                                      'artist-${music.popularArtists[i].id}-$_visitGeneration',
                                     ),
                                     artist: music.popularArtists[i],
                                   )
@@ -225,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     _Section(
-                      key: const ValueKey('section-albums'),
+                      key: ValueKey('section-albums-$_visitGeneration'),
                       title: 'Álbumes destacados',
                       icon: LucideIcons.discAlbum,
                       delayMs: 180,
@@ -240,7 +267,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemBuilder: (_, i) =>
                               AlbumCard(
                                     key: ValueKey(
-                                      'album-${music.popularAlbums[i].id}',
+                                      'album-${music.popularAlbums[i].id}-$_visitGeneration',
                                     ),
                                     album: music.popularAlbums[i],
                                   )
