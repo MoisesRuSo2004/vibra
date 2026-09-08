@@ -29,6 +29,8 @@ class ArtistCard extends StatelessWidget {
                 imageUrl: artist.pictureMedium,
                 width: 88,
                 height: 88,
+                memCacheWidth: 176,
+                memCacheHeight: 176,
                 fit: BoxFit.cover,
                 placeholder: (_, _) => Container(
                   color: AppColors.surface,

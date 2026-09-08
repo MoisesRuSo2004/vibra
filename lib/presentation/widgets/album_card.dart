@@ -31,6 +31,8 @@ class AlbumCard extends StatelessWidget {
                 imageUrl: album.coverMedium,
                 width: 140,
                 height: 140,
+                memCacheWidth: 280,
+                memCacheHeight: 280,
                 fit: BoxFit.cover,
                 placeholder: (_, _) => Container(
                   color: AppColors.surface,

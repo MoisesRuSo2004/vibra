@@ -30,7 +30,10 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter build web --release --dart-define=DEEZER_PROXY_BASE_URL=/api/deezer
+      # --wasm evita un bug real del renderer CanvasKit (compilación JS por
+      # defecto) donde las imágenes dejan de pintarse al volver de una
+      # pantalla de detalle — ver el comentario en build_and_deploy.sh.
+      - run: flutter build web --release --wasm --dart-define=DEEZER_PROXY_BASE_URL=/api/deezer
 
       - name: Copiar build al proyecto de Vercel
         run: |

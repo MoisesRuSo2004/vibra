@@ -51,6 +51,8 @@ class MiniPlayer extends StatelessWidget {
                               imageUrl: track.albumCover,
                               width: 40,
                               height: 40,
+                              memCacheWidth: 80,
+                              memCacheHeight: 80,
                               fit: BoxFit.cover,
                               errorWidget: (_, _, _) => Container(
                                 color: AppColors.background,

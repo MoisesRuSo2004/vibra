@@ -69,6 +69,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
                               imageUrl: album.coverBig,
                               width: 200,
                               height: 200,
+                              memCacheWidth: 400,
+                              memCacheHeight: 400,
                               fit: BoxFit.cover,
                             ),
                           ),

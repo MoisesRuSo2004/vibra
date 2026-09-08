@@ -331,6 +331,8 @@ class _RecentTrackCard extends StatelessWidget {
                 imageUrl: track.albumCover,
                 width: 140,
                 height: 140,
+                memCacheWidth: 280,
+                memCacheHeight: 280,
                 fit: BoxFit.cover,
                 errorWidget: (_, _, _) => Container(
                   color: AppColors.surface,

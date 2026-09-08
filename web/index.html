@@ -32,6 +32,22 @@
 
   <title>vibra</title>
   <link rel="manifest" href="manifest.json">
+
+  <script>
+    // El service worker que genera Flutter intercepta TODAS las peticiones
+    // del mismo origen, incluyendo /api/deezer/... (el proxy CORS de
+    // producción vive en ese mismo origen). Eso causaba fallos 503
+    // intermitentes en las llamadas a la API sin ningún patrón claro. Esta
+    // app no necesita soporte offline/PWA, así que se desregistra
+    // activamente antes de que pueda interceptar nada.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+  </script>
 </head>
 <body>
   <!--

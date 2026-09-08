@@ -74,6 +74,8 @@ class _ArtistScreenState extends State<ArtistScreen> {
                                 imageUrl: artist.pictureBig,
                                 width: 150,
                                 height: 150,
+                                memCacheWidth: 300,
+                                memCacheHeight: 300,
                                 fit: BoxFit.cover,
                               ),
                             ),

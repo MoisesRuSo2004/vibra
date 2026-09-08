@@ -60,6 +60,8 @@ class PlayerScreen extends StatelessWidget {
                           imageUrl: track.albumCover,
                           width: size,
                           height: size,
+                          memCacheWidth: (size * 2).round(),
+                          memCacheHeight: (size * 2).round(),
                           fit: BoxFit.contain,
                           errorWidget: (_, _, _) => Container(
                             width: size,
