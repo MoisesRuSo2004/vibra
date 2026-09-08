@@ -143,6 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     if (recentlyPlayed.isNotEmpty)
                       _Section(
+                        key: const ValueKey('section-recent'),
                         title: 'Escuchado recientemente',
                         icon: LucideIcons.history,
                         delayMs: 0,
@@ -157,6 +158,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             separatorBuilder: (_, _) =>
                                 const SizedBox(width: 16),
                             itemBuilder: (_, i) => _RecentTrackCard(
+                                  key: ValueKey(
+                                    'recent-${recentlyPlayed[i].id}',
+                                  ),
                                   track: recentlyPlayed[i],
                                   queue: recentlyPlayed,
                                 )
@@ -167,6 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     _Section(
+                      key: const ValueKey('section-recommended'),
                       title: 'Recomendado para ti',
                       icon: LucideIcons.sparkle,
                       delayMs: 60,
@@ -178,6 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             .entries
                             .map(
                               (e) => Padding(
+                                key: ValueKey('recommended-${e.value.id}'),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
                                 ),
@@ -193,6 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     _Section(
+                      key: const ValueKey('section-artists'),
                       title: 'Artistas populares',
                       icon: LucideIcons.users,
                       delayMs: 120,
@@ -205,7 +212,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           separatorBuilder: (_, _) =>
                               const SizedBox(width: 16),
                           itemBuilder: (_, i) =>
-                              ArtistCard(artist: music.popularArtists[i])
+                              ArtistCard(
+                                    key: ValueKey(
+                                      'artist-${music.popularArtists[i].id}',
+                                    ),
+                                    artist: music.popularArtists[i],
+                                  )
                                   .animate(delay: (i * 60).ms)
                                   .fadeIn(duration: 300.ms)
                                   .slideX(begin: 0.15, end: 0),
@@ -213,6 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     _Section(
+                      key: const ValueKey('section-albums'),
                       title: 'Álbumes destacados',
                       icon: LucideIcons.discAlbum,
                       delayMs: 180,
@@ -225,7 +238,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           separatorBuilder: (_, _) =>
                               const SizedBox(width: 16),
                           itemBuilder: (_, i) =>
-                              AlbumCard(album: music.popularAlbums[i])
+                              AlbumCard(
+                                    key: ValueKey(
+                                      'album-${music.popularAlbums[i].id}',
+                                    ),
+                                    album: music.popularAlbums[i],
+                                  )
                                   .animate(delay: (i * 60).ms)
                                   .fadeIn(duration: 300.ms)
                                   .slideX(begin: 0.15, end: 0),
@@ -250,6 +268,7 @@ class _Section extends StatelessWidget {
   final int delayMs;
 
   const _Section({
+    super.key,
     required this.title,
     required this.icon,
     required this.child,
@@ -292,7 +311,7 @@ class _RecentTrackCard extends StatelessWidget {
   final Track track;
   final List<Track> queue;
 
-  const _RecentTrackCard({required this.track, required this.queue});
+  const _RecentTrackCard({super.key, required this.track, required this.queue});
 
   @override
   Widget build(BuildContext context) {
