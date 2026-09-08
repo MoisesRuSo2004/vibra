@@ -3,6 +3,13 @@
 // mismo proyecto de Vercel que sirve la app, así que las peticiones desde
 // el navegador son same-origin: ni siquiera se necesitaría CORS, pero se
 // agrega igual por si se reutiliza este endpoint desde otro origen.
+//
+// No es un archivo con corchetes ([...path].js): en este proyecto (sin
+// framework detectado por Vercel) el catch-all por convención de archivos
+// solo funcionaba para un segmento de ruta (/api/deezer/chart) y devolvía
+// 404 con dos o más (/api/deezer/album/123/tracks). En vez de depender de
+// esa convención, vercel.json reescribe /api/deezer/:path* hacia este
+// archivo plano pasando la ruta completa como query param ?path=...
 const DEEZER_BASE_URL = 'https://api.deezer.com';
 
 module.exports = async (req, res) => {
@@ -15,15 +22,8 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // No se usa req.url para la query string: Vercel reescribe internamente
-  // las rutas catch-all y le agrega su propio parámetro con el path a
-  // req.url/req.query — y, al menos en esta versión del CLI, la clave del
-  // catch-all llega literalmente como "...path" (con los puntos incluidos),
-  // no "path". Se reconstruye la query a mano quitando esa clave, sea cual
-  // sea su nombre exacto.
-  const { path: pathKey, '...path': dotsPathKey, ...restQuery } = req.query;
-  const segments = pathKey ?? dotsPathKey;
-  const targetPath = Array.isArray(segments) ? segments.join('/') : segments || '';
+  const { path: rawPath, ...restQuery } = req.query;
+  const targetPath = Array.isArray(rawPath) ? rawPath.join('/') : rawPath || '';
   const search = new URLSearchParams(restQuery).toString();
   const targetUrl = `${DEEZER_BASE_URL}/${targetPath}${search ? `?${search}` : ''}`;
 

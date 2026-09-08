@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/api/deezer/:path*", "destination": "/api/proxy?path=:path*" }
+  ]
+}
