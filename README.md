@@ -11,6 +11,8 @@ Aplicación móvil de descubrimiento musical (estilo Spotify) hecha en Flutter, 
 - [Pantallas](#pantallas)
 - [Cómo correr el proyecto](#cómo-correr-el-proyecto)
 - [CORS en Flutter Web](#cors-en-flutter-web-importante)
+- [Despliegue](#despliegue)
+- [Problemas del despliegue web y cómo se resolvieron](#problemas-del-despliegue-web-y-cómo-se-resolvieron)
 - [Estructura de carpetas y clases](#estructura-de-carpetas-y-clases)
 
 ## Consigna del taller
@@ -117,7 +119,7 @@ Es el mismo patrón `_isLoading` / `_errorMessage` del código base del profe, p
 3. **Detalle de género** — artistas, álbumes y canciones de un género (`/chart/{genreId}`).
 4. **Detalle de artista** — foto, fans, botón reproducir, top canciones, álbumes.
 5. **Detalle de álbum** — portada, botón reproducir, tracklist numerado.
-6. **Reproductor** — reproduce el preview de 30s, con progreso, play/pause/siguiente/anterior, shuffle, repeat y favorito.
+6. **Reproductor** — reproduce el preview de 30s, con progreso, play/pause/siguiente/anterior, shuffle, repeat y favorito; el nombre del artista es clickeable y navega a su perfil.
 7. **Favoritos** — canciones marcadas con ♡, guardadas en memoria durante la sesión.
 
 Navegación con `Navigator` + rutas nombradas (`core/routes/app_routes.dart`), transiciones custom (fade+zoom para artista/álbum/género, slide-up para el reproductor) y un mini-player persistente sobre la barra inferior.
@@ -155,20 +157,26 @@ flutter build apk --release
 
 Genera `build/app/outputs/flutter-apk/app-release.apk`. Se comparte el archivo (Drive, WhatsApp, etc.); quien lo instale debe activar "instalar apps de orígenes desconocidos".
 
-### Web (Vercel)
+### Web (Vercel + GitHub Actions)
 
-`tool/cors_proxy.dart` es **solo para desarrollo local** — corre en `localhost:8787` de tu propia máquina, así que una vez publicada la app, nadie más tiene ese proxy disponible. Para producción, el mismo proxy vive como función serverless dentro del proyecto de Vercel (`deploy/web/api/deezer/[...path].js`), servida desde el mismo origen que la app — no hace falta CORS real porque es same-origin.
+🔗 **Producción:** https://web-topaz-nine-40.vercel.app
+
+`tool/cors_proxy.dart` es **solo para desarrollo local** — corre en `localhost:8787` de tu propia máquina, así que una vez publicada la app, nadie más tiene ese proxy disponible. Para producción, el mismo proxy vive como función serverless dentro del proyecto de Vercel, servida desde el mismo origen que la app — no hace falta CORS real porque es same-origin.
 
 Estructura de despliegue:
 ```
 deploy/web/
-├── api/deezer/[...path].js   → función serverless: reenvía a Deezer (equivalente prod de tool/cors_proxy.dart)
+├── vercel.json               → reescribe /api/deezer/:path* → /api/proxy?path=:path*
+├── api/proxy.js              → función serverless: reenvía a Deezer (equivalente prod de tool/cors_proxy.dart)
 ├── public/                    → build de Flutter Web compilado (generado, no se versiona)
-└── build_and_deploy.sh        → compila con el flag correcto y copia a public/
+└── build_and_deploy.sh        → compila con las flags correctas y copia a public/
 ```
 
 `ApiConstants._webProxyBaseUrl` usa `String.fromEnvironment('DEEZER_PROXY_BASE_URL', defaultValue: 'http://localhost:8787')`, así que sin tocar nada `flutter run -d chrome` sigue funcionando exactamente igual que antes. Solo el build de producción cambia ese valor a `/api/deezer` vía `--dart-define`.
 
+**Despliegue automático (recomendado):** cada `git push` a `main` que toque `lib/`, `web/`, `pubspec.yaml` o `deploy/web/api/` dispara `.github/workflows/deploy-web.yml`, que instala Flutter, compila (con `--wasm`, ver más abajo por qué) y despliega solo. No hay que hacer nada manual — con hacer commit y push basta. Requiere 3 secrets ya configurados en el repo de GitHub (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`).
+
+**Despliegue manual** (para probar algo antes de commitear, o si el Action falla):
 ```bash
 # 1. Compila apuntando al proxy serverless y copia el resultado a deploy/web/public
 bash deploy/web/build_and_deploy.sh
@@ -181,7 +189,29 @@ vercel login
 vercel --prod
 ```
 
-La primera vez, `vercel --prod` pregunta a qué proyecto/cuenta vincular la carpeta — se acepta lo que sugiere por defecto. Para actualizar tras cambios en la app, se repiten los 3 pasos.
+⚠️ Si haces un deploy manual y **luego** haces `git push`, el Action de GitHub va a volver a desplegar por su cuenta segundos después — si tu cambio manual no estaba comiteado todavía, el Action lo va a pisar con la versión vieja. Comitea primero, despliega manual después (o simplemente deja que el Action lo haga solo).
+
+## Problemas del despliegue web y cómo se resolvieron
+
+Llevar la app de "corre en mi máquina" a "funciona en producción para cualquiera" no salió a la primera. Se documentan acá los problemas reales que aparecieron, en el orden en que se encontraron, porque varios no son obvios y podrían repetirse si se toca esta parte del proyecto.
+
+**Lección general que atraviesa casi todo esto: `curl` no detecta bugs de la app compilada.** Varias veces un `curl` a la API de producción respondía perfecto mientras la app real, corriendo en un navegador de verdad, estaba rota — porque el problema no estaba en el servidor sino en cómo el *build* de Flutter terminaba armando las URLs, o en cómo el navegador renderizaba. La verificación real solo llegó abriendo el sitio en Chrome (con la extensión Claude in Chrome) y reproduciendo el flujo a mano.
+
+1. **El proxy devolvía 404 en rutas de más de un segmento.** `/api/deezer/chart` funcionaba pero `/api/deezer/album/123/tracks` o `/api/deezer/search/artist` no — Vercel nunca llegaba a invocar la función. La convención de archivos con corchetes (`api/deezer/[...path].js`) para rutas "catch-all" resultó no comportarse como en un proyecto Next.js cuando Vercel no detecta ningún framework. Se reemplazó por un `vercel.json` con un `rewrite` explícito hacia un archivo plano (`api/proxy.js`), sin depender de esa convención.
+
+2. **El sitio pedía login de Vercel para cualquiera que lo abriera.** Vercel tenía activada la protección SSO/Deployment Protection a nivel de proyecto, así que cualquier URL `.vercel.app` (incluida la de producción) redirigía a una pantalla de login de Vercel. Se desactivó con `vercel project protection disable web --sso`.
+
+3. **Un `git push` disparó un despliegue vacío que rompió el sitio.** Mientras el repo de GitHub estaba conectado de forma nativa a Vercel, un push activó un build automático de Vercel — que no tiene Flutter instalado, así que sirvió un sitio sin `index.html`, reemplazando el deploy bueno. Se desconectó esa integración nativa (`vercel git disconnect`) y se reemplazó por un GitHub Action propio (`.github/workflows/deploy-web.yml`) que sí instala Flutter antes de compilar.
+
+4. **Git Bash rompía la URL del proxy en cada build, en silencio.** El comando `flutter build web --dart-define=DEEZER_PROXY_BASE_URL=/api/deezer`, corrido desde Git Bash en Windows, hacía que MSYS convirtiera automáticamente `/api/deezer` (por empezar con `/`) en una ruta de Windows tipo `C:/Program Files/Git/api/deezer` **antes** de pasárselo a Flutter. El build terminaba "exitoso" pero con esa URL rota horneada adentro — el navegador terminaba pidiendo `file:///C:/Program Files/Git/api/deezer/chart`. Este fue el más difícil de encontrar porque un `curl` a mano a la URL correcta nunca lo iba a reproducir. Se arregló anteponiendo `MSYS_NO_PATHCONV=1` al comando en `build_and_deploy.sh`.
+
+5. **El service worker de Flutter interceptaba las llamadas a la API y a veces las rompía.** Al mover el proxy al mismo origen que la app (para el punto 1), sin querer se lo puso dentro del scope del service worker que Flutter genera automáticamente — causando fallos 503 intermitentes sin patrón claro. Como esta app no necesita soporte offline/PWA, se desregistra el service worker activamente desde `web/index.html` apenas carga la página.
+
+6. **Las imágenes dejaban de cargar al volver de una pantalla de detalle (el más largo de depurar).** Entrar a un álbum o artista y volver (con el botón del navegador, la flecha de la pantalla, o el botón "atrás" del sistema — daba igual cuál) dejaba algunas o todas las imágenes del Home en negro, con la consola llena de `WebGL: INVALID_VALUE: texImage2D: no image`. Se probaron y descartaron varias hipótesis en orden — la animación `Hero` (se quitó, no era eso), falta de `key`s estables en las listas (se agregaron, ayudan mas no era la causa raíz), y decodificar las imágenes a resolución nativa en vez del tamaño real de pantalla (se agregó `memCacheWidth`/`memCacheHeight`, buena práctica pero tampoco era la causa). La causa real: un bug del renderer CanvasKit en el compilador JS por defecto de Flutter Web, relacionado con el patrón de shell con `Navigator` anidado que mantiene la pantalla de atrás montada (no destruida) debajo de la nueva. Compilar con `--wasm` (un pipeline de renderizado distinto) lo resolvió — **pero solo en Chrome**; en Safari/iOS el mismo síntoma seguía apareciendo. La solución final, que si funciona en cualquier navegador: un `RouteObserver` registrado en el `Navigator` de `AppShell`, que `HomeScreen` escucha vía `RouteAware.didPopNext()` para incrementar un contador que se mete en las `key` de sus tarjetas — así Flutter las reconstruye desde cero cada vez que se vuelve a Home, en vez de reusar el estado (y la textura) vieja.
+
+7. **El mini-player abría un reproductor por cada toque si se tocaba varias veces seguidas.** `onTap` llamaba `Navigator.pushNamed` sin ningún control, así que tocarlo 3 veces apilaba 3 pantallas de reproductor una encima de otra. Se agregó un flag (`_opening`) que ignora toques mientras la transición de apertura está en curso.
+
+8. **El disco se quedó sin espacio instalando el SDK de Android.** Al intentar generar el `.apk` para compartir con compañeros, hubo que instalar el Android SDK (command-line tools) desde cero, lo que llenó por completo el disco `C:` (2.6GB libres de 238GB) a mitad de la descarga del NDK. Se revirtió esa instalación a pedido del usuario; **el build de APK y de Windows quedaron pendientes** de que se libere espacio en disco — ver [Android (compartir con compañeros)](#android-compartir-con-compañeros).
 
 ## Estructura de carpetas y clases
 
@@ -238,10 +268,18 @@ lib/
         ├── album_card.dart                 → AlbumCard: tarjeta de álbum
         ├── genre_card.dart                  → GenreCard: tarjeta de color sólido por género
         ├── mini_player.dart                 → MiniPlayer: barra persistente sobre la nav inferior
+        │                                       (con guard anti-doble-toque, ver sección de problemas)
         ├── favorite_button.dart             → FavoriteButton: ícono de corazón reutilizable
         ├── gradient_header.dart             → GradientHeader: fondo degradado tipo Spotify
-        └── fade_slide_in.dart               → FadeSlideIn: animación de entrada fade + slide-up
+        ├── fade_slide_in.dart               → FadeSlideIn: animación de entrada fade + slide-up
+        └── pressable_scale.dart             → PressableScale: feedback táctil (escala al presionar)
+                                                para tarjetas y botones
 
 tool/
 └── cors_proxy.dart                     → proxy CORS solo para desarrollo en Web (ver sección de arriba)
+
+deploy/web/                             → despliegue a producción (Vercel), ver sección Despliegue
+.github/workflows/deploy-web.yml        → CI: build + deploy automático en cada push relevante
 ```
+
+Librerías de animación (`flutter_animate`, `shimmer`) y de UI (`lucide_icons_flutter`, `cached_network_image`) están en `pubspec.yaml` con un comentario explicando para qué se usa cada una.
