@@ -46,3 +46,8 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Despliegue web (Vercel): public/ es el build compilado (regenerado por
+# build_and_deploy.sh), .vercel/ es metadata local del proyecto enlazado
+deploy/web/public/
+deploy/web/.vercel/

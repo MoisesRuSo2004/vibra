@@ -143,6 +143,46 @@ dart run tool/cors_proxy.dart
 flutter run -d chrome
 ```
 
+## Despliegue
+
+### Android (compartir con compañeros)
+
+No hay problema de CORS: es una app nativa, no un navegador, así que llama a Deezer directo sin proxy.
+
+```bash
+flutter build apk --release
+```
+
+Genera `build/app/outputs/flutter-apk/app-release.apk`. Se comparte el archivo (Drive, WhatsApp, etc.); quien lo instale debe activar "instalar apps de orígenes desconocidos".
+
+### Web (Vercel)
+
+`tool/cors_proxy.dart` es **solo para desarrollo local** — corre en `localhost:8787` de tu propia máquina, así que una vez publicada la app, nadie más tiene ese proxy disponible. Para producción, el mismo proxy vive como función serverless dentro del proyecto de Vercel (`deploy/web/api/deezer/[...path].js`), servida desde el mismo origen que la app — no hace falta CORS real porque es same-origin.
+
+Estructura de despliegue:
+```
+deploy/web/
+├── api/deezer/[...path].js   → función serverless: reenvía a Deezer (equivalente prod de tool/cors_proxy.dart)
+├── public/                    → build de Flutter Web compilado (generado, no se versiona)
+└── build_and_deploy.sh        → compila con el flag correcto y copia a public/
+```
+
+`ApiConstants._webProxyBaseUrl` usa `String.fromEnvironment('DEEZER_PROXY_BASE_URL', defaultValue: 'http://localhost:8787')`, así que sin tocar nada `flutter run -d chrome` sigue funcionando exactamente igual que antes. Solo el build de producción cambia ese valor a `/api/deezer` vía `--dart-define`.
+
+```bash
+# 1. Compila apuntando al proxy serverless y copia el resultado a deploy/web/public
+bash deploy/web/build_and_deploy.sh
+
+# 2. Login (una sola vez; abre el navegador para autenticarte)
+cd deploy/web
+vercel login
+
+# 3. Deploy a producción
+vercel --prod
+```
+
+La primera vez, `vercel --prod` pregunta a qué proyecto/cuenta vincular la carpeta — se acepta lo que sugiere por defecto. Para actualizar tras cambios en la app, se repiten los 3 pasos.
+
 ## Estructura de carpetas y clases
 
 ```
