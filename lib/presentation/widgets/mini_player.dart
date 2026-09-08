@@ -90,6 +90,17 @@ class MiniPlayer extends StatelessWidget {
                             ),
                           ),
                           IconButton(
+                            icon: const Icon(LucideIcons.skipBack),
+                            iconSize: 20,
+                            color: AppColors.textPrimary,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
+                            onPressed: () => player.playPrevious(),
+                          ),
+                          IconButton(
                             icon: Icon(
                               player.isPlaying
                                   ? LucideIcons.circlePause
@@ -97,7 +108,23 @@ class MiniPlayer extends StatelessWidget {
                               color: AppColors.textPrimary,
                               size: 32,
                             ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 40,
+                              minHeight: 40,
+                            ),
                             onPressed: () => player.togglePlayPause(),
+                          ),
+                          IconButton(
+                            icon: const Icon(LucideIcons.skipForward),
+                            iconSize: 20,
+                            color: AppColors.textPrimary,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
+                            onPressed: () => player.playNext(),
                           ),
                         ],
                       ),
